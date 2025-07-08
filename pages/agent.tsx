@@ -7,23 +7,23 @@ export default function AgentPage() {
   const [result, setResult] = useState<string[] | string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleTranscription = async (text: string) => {
-    setTranscript(text);
+  const handleTranscription = async (transcript: string, mcpResponse: any) => {
+    setTranscript(transcript);
     setLoading(true);
 
     try {
-      // 1. Send to MCP router
-      const mcpRes = await fetch("/api/mcp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-
-      const mcpData = await mcpRes.json();
-      const agentName = extractAgentFromMCP(mcpData);
+      // Extract agent from MCP response
+      const msg = mcpResponse?.choices?.[0]?.message?.content;
+      let agentName = "suggest";
+      if (msg) {
+        try {
+          const parsed = JSON.parse(msg);
+          agentName = parsed.agent || "suggest";
+        } catch {}
+      }
       setAgent(agentName);
 
-      // 2. Call agent
+      // Call the selected agent
       const agentRes = await fetch(`/api/agents/${agentName}`);
       const agentData = await agentRes.json();
       setResult(agentData.result || agentData.message);
@@ -32,16 +32,6 @@ export default function AgentPage() {
     }
 
     setLoading(false);
-  };
-
-  const extractAgentFromMCP = (data: any): string => {
-    const msg = data.choices?.[0]?.message?.content;
-    try {
-      const parsed = JSON.parse(msg);
-      return parsed.agent || "suggest";
-    } catch {
-      return "suggest";
-    }
   };
 
   return (

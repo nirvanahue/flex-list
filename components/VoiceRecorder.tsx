@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 
 type VoiceRecorderProps = {
-  onTranscription: (text: string) => void;
+  onTranscription: (transcript: string, mcpResponse: any) => void;
 };
 
 export default function VoiceRecorder({ onTranscription }: VoiceRecorderProps) {
@@ -47,7 +47,7 @@ export default function VoiceRecorder({ onTranscription }: VoiceRecorderProps) {
     });
 
     const data = await res.json();
-    onTranscription(data.text || "No transcript found.");
+    onTranscription(data.transcript || "No transcript found.", data.mcpResponse);
   };
 
   return (
