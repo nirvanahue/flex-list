@@ -1,5 +1,40 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.status(200).json({ agent: 'flex', message: 'This is a dummy response from the Flexing Agent.' });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'GROQ_API_KEY not set in environment' });
+  }
+
+  const { transcript } = req.body;
+  if (!transcript) {
+    return res.status(400).json({ error: 'Missing transcript in request body' });
+  }
+
+  try {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "llama3-70b-8192",
+        messages: [
+          { role: "system", content: "You are a flexing agent. Respond to the user's request in a fun, creative, or impressive way." },
+          { role: "user", content: transcript }
+        ]
+      })
+    });
+
+    const data = await response.json();
+    const flexResponse = data.choices?.[0]?.message?.content || "No flex response found.";
+    res.status(200).json({ agent: 'flex', message: flexResponse });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to flex', details: (err as Error).message });
+  }
 } 

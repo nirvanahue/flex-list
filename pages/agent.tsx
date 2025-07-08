@@ -7,6 +7,7 @@ export default function AgentPage() {
   const [result, setResult] = useState<string[] | string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Updated to POST transcript to agent endpoint
   const handleTranscription = async (transcript: string, mcpResponse: any) => {
     setTranscript(transcript);
     setLoading(true);
@@ -23,8 +24,12 @@ export default function AgentPage() {
       }
       setAgent(agentName);
 
-      // Call the selected agent
-      const agentRes = await fetch(`/api/agents/${agentName}`);
+      // Call the selected agent with POST and transcript
+      const agentRes = await fetch(`/api/agents/${agentName}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript }),
+      });
       const agentData = await agentRes.json();
       setResult(agentData.result || agentData.message);
     } catch (err) {
